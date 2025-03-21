@@ -13,16 +13,16 @@ contract CrowdFunding {
         string image;
         address[] donors;
         uint[] donations;
-    };
+    }
 
     mapping(uint => Campaign) public campaigns;
     uint public numberOfCampaigns = 0;
 
-    function createCampaign(address _owner, string memory _title,string _description, uint _target, uint _deadline, string memory _image) public returns(uint){
+    function createCampaign(address _owner, string memory _title,string memory _description, uint _target, uint _deadline, string memory _image) public returns(uint){
 
         require(_deadline > block.timestamp, "Deadline must be a time in the future");
 
-        Campaign storage newCampaign = Campaign storage newCampaign = Campaign({
+        campaigns[numberOfCampaigns] = Campaign({
                 owner: _owner,
                 title: _title,
                 description: _description,
@@ -34,29 +34,39 @@ contract CrowdFunding {
                 donations: new uint[](0)
             });
 
-        campaigns[numberOfCampaigns] = newCampaign;
         numberOfCampaigns++;
         return numberOfCampaigns - 1;
     }
 
-    function donateToCampaign(uint _id) public returns(string memory) {
+    function donateToCampaign(uint _campaignId) public payable returns(string memory) {
         uint amount = msg.value;
 
-        require(_id < numberOfCampaigns, "Campaign does not exist");
-        require(campaigns[_id].deadline > block.timestamp, "Campaign deadline has passed");
+        require(_campaignId < numberOfCampaigns, "Campaign does not exist");
+        require(campaigns[_campaignId].deadline > block.timestamp, "Campaign deadline has passed");
 
-        (bool success, ) = payable(campaigns[_id].owner).transfer(amount);
+        (bool success, ) = payable(campaigns[_campaignId].owner).call{value:amount}("");
 
-        require(success, "Transfer failed.");
+        require(success, "Funding Failed, Please Try Again");
 
-        campaigns[_id].amountCollected += amount;
-        campaigns[_id].donors.push(msg.sender);
-        campaigns[_id].donations.push(amount);
+        campaigns[_campaignId].amountCollected += amount;
+        campaigns[_campaignId].donors.push(msg.sender);
+        campaigns[_campaignId].donations.push(amount);
 
-        return "Donation successful";
+        return "Donation Successful";
     }
 
-    function getDonors(){}
+    function getDonors(uint _campaignId)public view returns(address[]  memory, uint[] memory){
+        require(_campaignId < numberOfCampaigns, "Campaign does not exist");
+        return (campaigns[_campaignId].donors, campaigns[_campaignId].donations);
+    }
 
-    function getCampaigns(){}
+    function getCampaigns()public view returns(Campaign[] memory){
+        Campaign[] memory allCampaigns = new Campaign[](numberOfCampaigns);
+
+        for(uint i = 0; i < numberOfCampaigns; i++){
+            allCampaigns[i] = campaigns[i];
+        }
+
+        return allCampaigns;
+    }
 }

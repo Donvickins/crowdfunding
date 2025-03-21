@@ -1,6 +1,6 @@
 require("@matterlabs/hardhat-zksync-solc");
 require("@matterlabs/hardhat-zksync-verify");
-
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -36,6 +36,14 @@ module.exports = {
     cache: "./cache-zk",
     sources: "./contracts",
     tests: "./test",
+  },
+  defaultNetwork: "sepolia",
+  networks: {
+    hardhat: {},
+    sepolia: {
+      url: "https://sepolia.drpc.org",
+      accounts: [process.env.PRIVATE_KEY],
+    },
   },
   solidity: {
     version: "0.8.23",

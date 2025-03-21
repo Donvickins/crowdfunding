@@ -1,2 +1,3 @@
 crowdfunding/node_modules/
 *.log
+crowdfunding/.env
