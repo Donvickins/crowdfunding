@@ -1,3 +1,6 @@
 crowdfunding/node_modules/
 *.log
 crowdfunding/.env
+client/node_modules/
+client/.env.local
+client/.next
