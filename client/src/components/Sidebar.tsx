@@ -24,9 +24,7 @@ const Icon = ({
         <img
           src={imageUrl}
           alt="company_logo"
-          className={`w-1/2 bg-[#2c2f32] h-1/2 ${
-            isActive !== name && "grayscale"
-          }`}
+          className={`w-1/2 h-1/2 ${isActive !== name && "grayscale"}`}
         />
       )}
     </div>
@@ -38,12 +36,12 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col sticky h-[93vh] justify-center items-center top-5">
+    <div className="flex flex-col sticky h-[93dvh] justify-center items-center top-5">
       <Link to={"/"}>
-        <Icon imageUrl={logo} styles={`w-[48px] h-[48px] bg-[#2c2f32]`} />
+        <Icon imageUrl={logo} styles={`bg-[#2c2f32]`} />
       </Link>
 
-      <div className="flex flex-col flex-1 justify-between items-center bg-[#1c1c24] rounded-[1.25rem] w-[4.8rem] h-[1.25rem] py-4 mt-12 shadow-md">
+      <div className="flex flex-col flex-1 justify-between items-center bg-[#1c1c24] rounded-[1.25rem] w-[4.8rem] py-4 mt-12">
         <div className="flex flex-col justify-center items-center gap-3 ">
           {navlinks.map((link) => (
             <Icon
