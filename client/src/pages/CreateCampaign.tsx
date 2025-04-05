@@ -92,7 +92,7 @@ const CreateCampaign = () => {
           }}
         />
         <CustomButton
-          styles={`bg-green-bg hover:bg-green-bg-hover`}
+          styles={`bg-green-bg hover:bg-green-bg-hover font-epilogue`}
           btnType={"submit"}
           title={"Create Campaign"}
         />

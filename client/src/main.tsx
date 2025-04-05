@@ -6,11 +6,11 @@ import { ThirdwebProvider } from "thirdweb/react";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <ThirdwebProvider>
-        <App />
-      </ThirdwebProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+  //<React.StrictMode>
+  <BrowserRouter>
+    <ThirdwebProvider>
+      <App />
+    </ThirdwebProvider>
+  </BrowserRouter>
+  //</React.StrictMode>
 );

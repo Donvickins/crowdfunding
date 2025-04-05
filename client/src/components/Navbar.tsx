@@ -1,16 +1,121 @@
 import { menu, search, thirdweb } from "../assets";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CustomButton from "./CustomButton";
+import { FormField } from "./";
 import { Link, useNavigate } from "react-router";
 import { logo } from "../assets";
 import Icon from "./Icon";
 import { navlinks } from "../constants";
+import {
+  ConnectButton,
+  useActiveAccount,
+  useActiveWallet,
+  useConnect,
+  useDisconnect,
+} from "thirdweb/react";
+import { client } from "../client";
+import { createWallet, inAppWallet } from "thirdweb/wallets";
+import { preAuthenticate } from "thirdweb/wallets/in-app";
 
 const Navbar = () => {
   const [isActive, setIsActive] = useState("dashboard");
   const navigate = useNavigate();
   const [toggle, setToggle] = useState(false);
-  const address = "0x0";
+  const [isValidEmail, setIsValidEmail] = useState(false);
+
+  const activeAccount = useActiveAccount();
+  const connectedWallet = useActiveWallet();
+
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isVerification, setIsVerification] = useState(false);
+  const [email, setEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+
+  useEffect(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(email)) {
+      setIsValidEmail(true);
+    } else {
+      setIsValidEmail(false);
+    }
+  }, [email]);
+
+  async function sendVerificationCode(clientEmail: string) {
+    try {
+      await preAuthenticate({
+        client,
+        strategy: "email",
+        email: clientEmail,
+      });
+    } catch (err: any) {
+      if (err instanceof Error && err.message.includes("CORS")) {
+        console.error("CORS Error: ", err);
+        alert("CORS Error: Please check your server configuration.");
+        return;
+      }
+      console.error(
+        `Error Sending Verification Mail to ${clientEmail}:`,
+        err?.message
+      );
+      alert(
+        `Error Sending Verification Mail to ${clientEmail}: ${err?.message}`
+      );
+      return;
+    }
+  }
+
+  async function handleLogin(clientEmail: string, verificationCode: string) {
+    try {
+      await connect(async () => {
+        const wallet = inAppWallet();
+        await wallet.connect({
+          client,
+          strategy: "email",
+          email: clientEmail,
+          verificationCode: verificationCode,
+        });
+        return wallet;
+      });
+    } catch (err: any) {
+      console.error("Error connecting wallet: ", err?.message);
+    }
+  }
+
+  async function handleAuthFlow() {
+    if (activeAccount && connectedWallet) {
+      disconnect(connectedWallet);
+      setEmail("");
+      setIsVerification(false);
+      setVerificationCode("");
+      setIsValidEmail(false);
+    } else {
+      if (!isVerification) {
+        if (!isValidEmail) {
+          alert("Please enter a valid email address.");
+          return;
+        } else {
+          setIsValidEmail(true);
+          try {
+            await sendVerificationCode(email);
+          } catch (err) {
+            return;
+          }
+
+          setIsVerification(true);
+          setVerificationCode("");
+        }
+      } else {
+        await handleLogin(email, verificationCode);
+        setEmail("");
+        setVerificationCode("");
+        setIsVerification(false);
+        setIsValidEmail(false);
+      }
+    }
+  }
+
   return (
     <nav className="flex justify-between flex-col-reverse md:flex-row gap-4">
       <div className="relative flex items-center max-sm:mx-auto rounded-[2rem] bg-primary-bg hover:bg-secondary-bg w-[80%] md:w-[45%] h-[3rem] transition-all duration-300 ease-in-out">
@@ -25,26 +130,62 @@ const Navbar = () => {
         </button>
       </div>
       <div className="gap-4 items-center hidden sm:flex justify-end">
-        <CustomButton
-          btnType="button"
-          styles={`${
-            address
-              ? `bg-green-bg hover:bg-green-bg-hover`
-              : `bg-gray-100 px-5 text-gray-800 hover:bg-gray-300`
-          }`}
-          title={address ? "Create Campaign" : "Connect Wallet"}
-          handleClick={() => {
-            if (address) {
-              navigate("/create-campaign");
-            }
-          }}
-        />
+        <div className="flex flex-col gap-5">
+          {!(activeAccount && connectedWallet) &&
+            (!isVerification ? (
+              <FormField
+                key={"email"}
+                name="email"
+                type="input"
+                labelName="Sign in with e-mail"
+                placeholder="example@email.com"
+                value={email}
+                handleChange={(e: any) => {
+                  setEmail(e.target.value);
+                }}
+              />
+            ) : (
+              <FormField
+                key={"verificationCode"}
+                name="verificationCode"
+                type="input"
+                labelName="Enter Verification Code"
+                placeholder="Verification Code"
+                value={verificationCode}
+                handleChange={(e: any) => {
+                  setVerificationCode(e.target.value);
+                }}
+              />
+            ))}
+          <CustomButton
+            btnType="button"
+            styles={`${
+              activeAccount && connectedWallet
+                ? `bg-red-400 hover:bg-red-600`
+                : `bg-gray-100 px-5 text-gray-800 hover:bg-gray-300`
+            }`}
+            title={`${
+              activeAccount && connectedWallet
+                ? "Disconnect Wallet"
+                : isVerification
+                ? "Verify Code"
+                : isValidEmail
+                ? "Send Verification Code"
+                : "Sign In"
+            }`}
+            handleClick={handleAuthFlow}
+          />
+        </div>
+
         <Link to={"/profile"}>
           <div className="rounded-[50%] p-4 w-[52px] h-[52px] bg-secondary-bg">
             <img src={thirdweb} alt="Avatar" />
           </div>
         </Link>
       </div>
+
+      {/* Mobile view hamburger menu */}
+
       <div className="flex sm:hidden justify-between items-center w-full">
         <Link to={"/"}>
           <Icon imageUrl={logo} styles={`bg-secondary-bg w-[3rem] h-[3rem]`} />
@@ -97,7 +238,7 @@ const Navbar = () => {
               </div>
             ))}
             <div className="flex justify-center items-center w-full mb-5 mt-5">
-              <CustomButton
+              {/* <CustomButton
                 btnType="button"
                 styles={`${
                   address
@@ -110,7 +251,7 @@ const Navbar = () => {
                     navigate("/create-campaign");
                   }
                 }}
-              />
+              /> */}
             </div>
           </div>
         </div>
