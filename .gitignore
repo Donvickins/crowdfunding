@@ -4,3 +4,4 @@ crowdfunding/.env
 client/node_modules/
 client/.env.local
 client/.next
+.vscode
